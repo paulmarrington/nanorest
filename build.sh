@@ -1,2 +1,2 @@
-gcc nanorestfile.c -lws2_32 -static -o nanorestfile
-nanorestfile
+gcc nanorestfile.c -static -o nanorestfile.linux
+./nanorestfile.linux

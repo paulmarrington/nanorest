@@ -32,7 +32,7 @@ void failure(char *type, int socketfd) {
 
 void respond(int len, char *mime, int socketfd) {
 	char buffer[128];
-  sprintf(buffer,"HTTP/1.1 200 OK\r\nServer: nanorestfile\r\nContent-Length: %ld\r\n", len);
+  sprintf(buffer,"HTTP/1.1 200 OK\r\nServer: nanorestfile\r\nContent-Length: %d\r\n", len);
 	send(socketfd, buffer, strlen(buffer), 0);
   sprintf(buffer,"Connection: close\r\nContent-Type: text/%s\r\n\r\n", mime);
 	send(socketfd, buffer, strlen(buffer), 0);
