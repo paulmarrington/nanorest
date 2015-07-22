@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #ifdef WIN32
-//#  include <windows.h>
 #  include <winsock2.h>
    typedef int socklen_t;
 #  define mkdir(fn, mode) mkdir(fn)
@@ -27,7 +26,7 @@
 void failure(char *type, int socketfd) {
 	char buffer[128];
 	printf(" - FAILED");
-	sprintf(buffer,"HTTP/1.1 type\r\nServer: nanorestfile\r\nConnection: close\r\n\r\n", type);
+	sprintf(buffer,"HTTP/1.1 %s\r\nServer: nanorestfile\r\nConnection: close\r\n\r\n", type);
 	send(socketfd, buffer, strlen(buffer), 0);
 }
 
@@ -58,15 +57,15 @@ void getf(char *uri, int socketfd) {
 }
 
 void putf(char *uri, int socketfd) {
-	int file_fd, len;
+	int len; FILE *fp;
 	char *body = uri + strlen(uri) + 1;
   do { body = strchr(body, '\r') + 1; }
-	while (body && strcmp(body, "\n\r\n"));
+	while (body && strncmp(body, "\n\r\n", 3));
 	len = strlen(body);
-	if ((file_fd = open(uri, O_WRONLY)) == -1 || write(file_fd, body, len) != len) {
+	if (!(fp = fopen(uri, "w")) || fprintf(fp, body, len) != len) {
 		failure("500 Write failed", socketfd); return;
 	}
-	close(file_fd);
+	fclose(fp);
 	respond(0, "text", socketfd);
 }
 
@@ -81,16 +80,28 @@ void deletef(char *uri, int socketfd) {
 	  respond(0, "text", socketfd);
 }
 
+int isDirectory(char *path) {
+   struct stat statbuf;
+   if (stat(path, &statbuf) != 0)
+       return 0;
+   return S_ISDIR(statbuf.st_mode);
+}
+
 void getd(char *uri, int socketfd) {
-	DIR *dp; char buffer[BUFSIZE], *bp = buffer;
+	DIR *dp; char buffer[BUFSIZE], *bp = buffer, *here;
   struct dirent *ep; int len;
 
-  if ((dp = opendir("./")) != NULL)
+	if (!*uri) uri = "./";
+  if ((dp = opendir(uri)) != NULL)
     {
       while (ep = readdir(dp)) {
-        strcpy(ep->d_name, bp);
-				bp += strlen(bp);
-				*bp++ = '\n';
+				if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) {
+					strcpy(here = bp, uri);
+					strcat(bp, ep->d_name);
+					bp += strlen(bp);
+					if (isDirectory(here)) *bp++ = '/';
+					*bp++ = '\n';
+				}
       }
       closedir(dp);
 			len = bp - buffer;
@@ -124,11 +135,11 @@ void request(int socketfd) {
 	long len;
 	char method[262144], *uri, *rest;
 
-	len = recv(socketfd, method, sizeof(method), 0);
-	if(len == 0 || len == -1) return;
+	len = recv(socketfd, method, sizeof(method) - 1, 0);
+	if (len == 0 || len == -1) return;
 	method[len] = 0;
 	uri = strchr(method, ' '); *uri = 0; uri += 2;
-	rest = strchr(rest, ' '); *rest = 0;
+	rest = strchr(uri, ' '); *rest = 0;
 	printf("\n%s %s", method, uri);
 	if (!*uri || uri[strlen(uri) - 1] == '/') {
 		if (strcmp(method, "GET") == 0) getd(uri, socketfd);

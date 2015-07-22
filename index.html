@@ -1,8 +1,30 @@
 <html>
   <head>
     <title>Test Nano-Rest-File</title>
+    <script>
+      function tests() {
+        function request(type, uri, body) {
+          var req = new XMLHttpRequest();
+          req.open(type, uri, true);
+          req.onload = function() {
+            console.log("STATUS", req.status);
+            console.log(req.responseText);
+          }
+          req.send(body);
+        }
+        request("GET", "index.html", null);
+        request("GET", "nothere.html", null);
+        request("PUT", "createme.txt", "This content ends with dot.");
+        request("GET", "./", null);
+        request("DELETE", "createme.txt", null);
+        request("GET", ".git/", null);
+        request("POST", "newdir/", null);
+        request("GET", "./", null);
+        request("DELETE", "newdir/", null);
+      }
+    </script>
   </head>
-  <body>
+  <body onload="tests()">
     <h1>Test Nano-Rest-File</h1>
   </body>
 </html>
