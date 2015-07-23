@@ -1,5 +1,5 @@
 # nanorest
-A very small web server to provide a restful interface for a workstation.
+A very small web server to provide a restful interface for a workstation. It will also serve static HTML and CSS files to provide a usable single-page-application development support environment.
 
 ## Server
 Run from the command prompt.
