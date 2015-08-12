@@ -1,2 +1,4 @@
+cd nanorestfile
 gcc nanorestfile.c -lws2_32 -static -o nanorestfile
-nanorestfile
+cd ..
+nanorestfile/nanorestfile.exe

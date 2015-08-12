@@ -21,7 +21,7 @@
 #  define recv(fd, rq, sz, md) read(fd, rq, sz)
 #  define send(fd, content, sz, md) write(fd, content, sz)
 #endif
-#define BUFSIZE 8096
+#define BUFSIZE 50000
 
 /* Let the client know when we are have failed to do what is asked */
 void failure(char *type, int socketfd) {
@@ -50,13 +50,10 @@ void getf(char *uri, int socketfd) {
   }
   /* Shortcut uses the file extension as the mime type - works for javascript and css at least */
   if ((mime = strchr(uri, '.'))) mime++; else mime = "text";
-  len = (long)lseek(file_fd, (off_t)0, SEEK_END); /* lseek to the file end to find the length */
-        (void)lseek(file_fd, (off_t)0, SEEK_SET); /* lseek back to the file start ready for reading */
   
+  len = read(file_fd, buffer, BUFSIZE);
   respond(len, mime, socketfd);
-  while (  (len = read(file_fd, buffer, BUFSIZE)) > 0 ) {
-    send(socketfd, buffer, len, 0);
-  }
+  send(socketfd, buffer, len, 0);
   close(file_fd);
 }
 
